@@ -1,0 +1,9 @@
+[project]
+name = "capital-markets-research-desk"
+version = "1.0.0"
+description = "Capital-markets research desk. Agents draft. A citation clerk accepts. No order path."
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
