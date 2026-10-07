@@ -24,3 +24,7 @@ python -m pytest
 ```
 
 Related: [investment-gems](https://github.com/TAM-DS/investment-gems) is suggestion-only. [paper-trading-floor](https://github.com/TAM-DS/paper-trading-floor) is the only place a paper fill can exist.
+
+## Dashboard
+
+Open [docs/index.html](docs/index.html). It shows the same fixture decisions as the tests. It is not a live market feed.
