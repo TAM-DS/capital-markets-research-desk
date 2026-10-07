@@ -1,6 +1,6 @@
 # Capital-markets research desk
 
-A team of agents drafts a capital-markets and energy brief. A citation clerk accepts or rejects each claim. The desk cannot place an order.
+Deterministic Python analyst functions draft a capital-markets and energy brief. A citation clerk accepts or rejects each claim. The desk cannot place an order.
 
 This is the research seat for the paper trading floor. A memo from this desk is an input, not a ticket.
 
@@ -8,7 +8,7 @@ This is the research seat for the paper trading floor. A memo from this desk is 
 
 - An equities analyst reads a synthetic filing excerpt.
 - An energy analyst reads an ERCOT hub fixture and a Henry Hub fixture, with units.
-- A citation clerk rejects an untrusted source and a stale curve.
+- A citation clerk rejects an untrusted source, a stale curve, and an energy claim missing its unit.
 - The coordinator strips order language from the memo.
 
 ## What it does not do
