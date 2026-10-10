@@ -32,6 +32,27 @@ A local Massive run on **October 10, 2026** loaded **167 daily bars each for XLE
 
 **The strategy underperformed its benchmark in this sample.** The application displays that result alongside its assumptions. A subsequent CrewAI research review reached `HUMAN_REVIEW_REQUIRED`. These are local demonstration observations, not an investment recommendation or validated trading edge.
 
+## Application screenshots
+
+Local demonstrations captured on October 10, 2026. These show historical research and simulation; they do not establish investment suitability, profitable trading, or production readiness.
+
+![capital-markets-research-desk historical market evidence](docs/screenshots/01-market-evidence.png)
+
+Historical daily evidence for XLE, XOM, and LNG, with explicit Massive provenance and price returns excluding dividends.
+
+<details>
+<summary>View the workflow and CrewAI review</summary>
+
+![capital-markets-research-desk workflow](docs/screenshots/02-holdout-evaluation.png)
+
+Fixed SMA20 chronological holdout for XLE: 5.46% strategy return versus 11.85% benchmark return at 10 bps one-way costs. The strategy underperformed in this sample.
+
+![capital-markets-research-desk CrewAI human-review result](docs/screenshots/03-crewai-review.png)
+
+CrewAI research, counterargument, and checked metric claims. Passing structured checks does not validate every narrative sentence.
+
+</details>
+
 ## Architecture and evidence boundary
 
 | Layer | Responsibility | Evidence to inspect |
@@ -48,7 +69,7 @@ A local Massive run on **October 10, 2026** loaded **167 daily bars each for XLE
 
 The optional review constructs three actual agents and tasks, then calls `Crew.kickoff()` in sequence: **market researcher → skeptical risk reviewer → evidence editor**. Agents receive calculated evidence, have no external tools, and cannot delegate or submit orders.
 
-The final Pydantic output contains a thesis, counterargument, evidence citations, uncertainties, and structured metric claims. Python checks citation membership, numeric values, and highest/lowest rankings against the loaded evidence. Drawdown is signed: the most negative value is the deepest loss. Rankings are only relative to the selected universe; they have little meaning for a single security.
+The final Pydantic output contains a thesis, counterargument, evidence citations, uncertainties, and structured metric claims. Agents cite short references such as `E1`. Python resolves only exact registered references to the full evidence hashes; it does not guess or repair mistyped citations. The audit retains the reference map, raw model output, and resolved review. Python checks citation membership, numeric values, and highest/lowest rankings against the loaded evidence. Drawdown is signed: the most negative value is the deepest loss. Rankings are only relative to the selected universe; they have little meaning for a single security.
 
 | Review status | Meaning |
 |---|---|
@@ -102,7 +123,7 @@ Select one to five tickers and a range with at least sixty trading sessions. Loa
 
 ## Verification and scope
 
-**Latest local verification: 39 tests passed on October 10, 2026.** Tests cover market validation and analytics, structured claim checks, bounded correction, dashboard rendering, and retained fixture behavior. AI orchestration tests construct CrewAI objects with model calls mocked; they do not contact providers. The demonstration observations above come from separate locally credentialed runs inspected through the application screenshots.
+**Latest local verification: 45 tests passed on October 10, 2026.** Tests cover market validation and analytics, structured claim checks, exact reference resolution, preserved raw audit output, bounded correction, dashboard rendering, and retained fixture behavior. AI orchestration tests construct CrewAI objects with model calls mocked; they do not contact providers. The demonstration observations above come from separate locally credentialed runs inspected through the application screenshots.
 
 The interactive application is [app.py](app.py). The older [static dashboard](docs/index.html) is a fixture view, and [legacy fixture scope](docs/legacy-fixture-scope.md) preserves its original implementation and limitations. This project is portfolio evidence of a local research/simulation system; it is not customer production or proof of profitable execution.
 
