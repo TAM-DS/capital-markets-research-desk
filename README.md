@@ -1,55 +1,117 @@
-# Capital Markets Research Desk · v2
+# Capital Markets Research Desk
 
-An evidence-backed research brief with a skeptical CrewAI review and a chronological historical strategy evaluation.
+A research workbench that combines traceable historical market evidence, a fixed-rule strategy evaluation, and a skeptical CrewAI brief for human review.
 
-## Run in PyCharm or a terminal
+**Historical evidence · Bounded AI research · Human authority**
 
-Clone this repository, open its folder in PyCharm, and select a Python 3.11–3.13 virtual environment. From the project terminal:
+## The decision this supports
+
+Does a research idea survive a transparent historical comparison—and what evidence is still missing?
+
+The desk keeps measured observations, strategy evaluation, and model interpretation visible as separate parts of the discussion. Python calculates the financial metrics; CrewAI drafts a thesis, challenges it, and names uncertainties. A human decides how much weight to give the result.
+
+The business purpose is to expose assumptions and weak evidence before a research narrative becomes a trading decision.
+
+## What the application does
+
+- Compares historical daily price evidence across selected equity/ETF symbols.
+- Displays deterministic research observations with source and date context.
+- Evaluates a fixed SMA20 long/cash rule on a chronological holdout.
+- Shows net return, benchmark return, drawdown, position changes, and assumed costs.
+- Produces an optional checked CrewAI brief and exports the source evidence.
+
+## Evaluation method
+
+The rule is fixed; the application does not optimize its parameters. The final **30%** of observations form the chronological holdout. Signals use a prior close and prior moving-average evidence, execution uses the next open, and returns use open-to-open prices. One-way costs are configurable, with closing costs included.
+
+This makes timing and cost assumptions inspectable. It does not eliminate selection bias or establish profitability. Dividends, financing, market impact, and point-in-time universe selection are absent.
+
+## Demonstration evidence
+
+A local Massive run on **October 10, 2026** loaded **167 daily bars each for XLE, XOM, and LNG**, covering **February 11–October 9**. The displayed **XLE** holdout began **July 30**. With **10 basis points** of one-way costs, the strategy returned **5.46%**, versus **11.85%** for its benchmark, with a **−8.11%** strategy drawdown and **9 position changes**.
+
+**The strategy underperformed its benchmark in this sample.** The application displays that result alongside its assumptions. A subsequent CrewAI research review reached `HUMAN_REVIEW_REQUIRED`. These are local demonstration observations, not an investment recommendation or validated trading edge.
+
+## Architecture and evidence boundary
+
+| Layer | Responsibility | Evidence to inspect |
+|---|---|---|
+| Streamlit | User-selected symbols, dates, and workflow controls | [Application](app.py) |
+| Market data | Provider response validation, explicit cache, and Python analytics | [Market module](src/desk/market.py) |
+| CrewAI | Bounded research and skeptical interpretation | [Crew and validator](src/desk/crew.py) |
+| Review surface | Accepted structured observations or a withheld draft with issues | [Review UI](src/desk/review_ui.py) |
+| Verification | Offline numerical, boundary, and dashboard checks | [Tests](tests/) |
+
+**Capability is not authority.** Model output never grants permission to trade. There is no broker connection, exchange integration, or real-money execution path.
+
+## CrewAI: execution, checks, and correction
+
+The optional review constructs three actual agents and tasks, then calls `Crew.kickoff()` in sequence: **market researcher → skeptical risk reviewer → evidence editor**. Agents receive calculated evidence, have no external tools, and cannot delegate or submit orders.
+
+The final Pydantic output contains a thesis, counterargument, evidence citations, uncertainties, and structured metric claims. Python checks citation membership, numeric values, and highest/lowest rankings against the loaded evidence. Drawdown is signed: the most negative value is the deepest loss. Rankings are only relative to the selected universe; they have little meaning for a single security.
+
+| Review status | Meaning |
+|---|---|
+| `CORRECTION_REQUIRED` | Draft failed checks; the readable accepted brief is withheld |
+| `HUMAN_REVIEW_REQUIRED` | Structured checks passed; interpretation still needs human judgment |
+| Call/schema failure | No new review is accepted |
+
+A failed draft gets at most one additional correction kickoff with an independent editor and field-specific feedback. Both attempts remain in the displayed audit. CrewAI may make multiple model requests within each kickoff; the correction therefore adds API usage. The audit reports usage per attempt.
+
+Narrative wording checks reject numeric/comparative prose and unsupported total-return wording, with narrowly approved missing-data disclosures. **These are limited rules, not a semantic proof.** Qualitative claims such as “elevated volatility” can still lack a reference baseline. A valid schema, matching digest, or passed metric check does not establish that every sentence is accurate or useful. Human review remains required.
+
+## Data modes and financial meaning
+
+| Mode | Source | What it establishes |
+|---|---|---|
+| `demo` | Generated synthetic daily bars | Workflow mechanics without credentials |
+| `massive` | Massive split-adjusted historical daily OHLCV | Provider-backed end-of-day evidence |
+| `cache` | Saved response for the exact ticker/date range | Explicit reuse of previously loaded evidence |
+
+The application uses an end-of-day research feed. It checks finite prices, OHLC consistency, timestamp order, date bounds, and sufficient history. Each exported dataset includes provenance, an as-of date, a provider request ID when available, and a SHA-256 digest. A digest helps identify/check the supplied rows; it does not authenticate the provider or prove their economic correctness.
+
+Price returns exclude dividends. Momentum uses twenty trading sessions; annualized volatility uses sample daily-return standard deviation and a trading-year convention. Dollar volume is a historical close-times-volume estimate. XLE, XOM, and LNG are equity/ETF energy proxies—not ERCOT power prices, Henry Hub spot prices, or direct Texas-market evidence. No filings, news, valuation, or fundamental data are supplied to the crew.
+
+Requests are paced at 12.5 seconds per session for the configured Basic-tier assumptions. Other running applications share the account’s provider limits. Errors are displayed; the app does not silently substitute demo data for a failed provider request. Consult provider terms before redistributing downloaded data.
+
+## Run locally in PyCharm or a terminal
+
+Use a project virtual environment; avoid installing into Homebrew’s system Python. Python 3.11–3.13 is the project setup range. From the repository folder on macOS/Linux:
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev,ai]"
-python -m pytest
-python -m streamlit run app.py
+python -m pytest -q
+python -m streamlit run app.py --server.port 8502
 ```
 
-Set `MASSIVE_API_KEY` and, for optional model review, `OPENAI_API_KEY` in your local run configuration environment variables. `CREWAI_MODEL` defaults to `openai/gpt-4.1-mini`; override with an available CrewAI-compatible model. Keys never belong in GitHub or chat. `.env.example` documents variable names; the app automatically loads `.env` from the project folder at startup. File values take precedence over shell values.
+Open **http://localhost:8502**. In PyCharm, select this project’s `.venv` interpreter. The `ai` extra installs CrewAI; use `.[dev]` if you only need deterministic research and the dashboard.
 
-## Three explicit data modes
+Copy [.env.example](.env.example) to a local `.env` and enter your credentials there:
 
-- **demo**: generated synthetic daily bars; needs no keys and proves workflow mechanics only.
-- **massive**: retrieves actual split-adjusted daily OHLCV through Massive's REST API. Free Basic is end-of-day, five requests/minute, two years of history. Requests are paced at 12.5 seconds per session; multiple simultaneous processes share the account limit and may receive HTTP 429.
-- **cache**: reads a previously fetched response for the exact ticker/date range. No silent fallback or claim that cached data is current.
+```dotenv
+MASSIVE_API_KEY=your_local_massive_key
+OPENAI_API_KEY=your_local_openai_key
+CREWAI_MODEL=openai/gpt-4.1-mini
+```
 
-Choose 1–5 US equity/ETF tickers and at least 60 trading sessions. Energy equities/ETFs such as XLE, XOM, and LNG are proxies, not ERCOT power or Henry Hub spot data. Data is checked for finite prices, OHLC consistency, ordered timestamps, date bounds, and sufficient history. Each evidence package carries its source, as-of date, provider request ID when available, and SHA-256 digest.
+Massive needs its key for provider data; OpenAI is only needed for the optional model review. The app loads the project-root `.env` automatically at startup, with file values taking precedence over shell values. Restart after changing credentials. Keep `.env` local; never commit or include keys in screenshots.
 
-## Actual CrewAI execution
+Select one to five tickers and a range with at least sixty trading sessions. Load evidence, inspect the source and dates, then optionally run CrewAI once. Switching/reloading evidence clears the prior AI brief. Model access and API charges depend on the configured provider account.
 
-The optional review creates a sequential Crew with three Agents and three Tasks, then calls `kickoff()`: market researcher → skeptical risk reviewer → evidence editor. The final output uses a Pydantic schema. Structured metric values and highest/lowest rankings are checked against Python evidence. Unknown IDs, incorrect values/rankings, numeric narrative and unsupported total-return wording flag the draft as `CORRECTION_REQUIRED`. Flagged drafts are withheld from the readable brief and retained in an audit expander. Agents receive precomputed metrics, have no external tools, and cannot submit orders. Identifier validation does not prove semantic accuracy; all model text requires human review. Model use incurs provider charges. A failed call accepts no new review.
+## Verification and scope
 
-## Financial interpretation
+**Latest local verification: 39 tests passed on October 10, 2026.** Tests cover market validation and analytics, structured claim checks, bounded correction, dashboard rendering, and retained fixture behavior. AI orchestration tests construct CrewAI objects with model calls mocked; they do not contact providers. The demonstration observations above come from separate locally credentialed runs inspected through the application screenshots.
 
-Returns, 20-session momentum, annualized daily-return volatility, maximum price drawdown, and average daily dollar volume are calculated in Python, never by a model. Historical SMA20 evaluation uses a fixed rule, the final 30% of observations as a chronological holdout, prior-close signals, next-open execution, open-to-open returns, and configurable one-way costs. No optimization is performed. Prices are split-adjusted, not total returns; dividends, financing, market impact, and point-in-time universe selection are not modeled. A positive result is not a forecast or a profitability claim.
+The interactive application is [app.py](app.py). The older [static dashboard](docs/index.html) is a fixture view, and [legacy fixture scope](docs/legacy-fixture-scope.md) preserves its original implementation and limitations. This project is portfolio evidence of a local research/simulation system; it is not customer production or proof of profitable execution.
 
-## Review boundary and limitations
+## Related projects
 
-This is a local portfolio research/simulation application, not customer production. No broker, exchange connection, or real-money execution exists. Reviewer names in the paper app are local audit labels, not authenticated identities. Synthetic demos and static legacy dashboards remain clearly labeled. Live Massive and model calls must be verified with locally configured credentials; offline tests do not establish provider connectivity. Check provider licensing before redistributing downloaded data.
-
-## Existing evidence
-
-[Legacy fixture scope](docs/legacy-fixture-scope.md) preserves the previous deterministic/protocol implementation and its limitations. Existing tests remain alongside the new market-data tests. The interactive app is `app.py`; `docs/index.html` remains the older static fixture view.
+| Project | Distinct purpose |
+|---|---|
+| [Investment Gems](https://github.com/TAM-DS/investment-gems) | Transparent shortlist screening |
+| [Capital Markets Research Desk](https://github.com/TAM-DS/capital-markets-research-desk) | Research challenge and historical strategy evaluation |
+| [Paper Trading Floor](https://github.com/TAM-DS/paper-trading-floor) | Explicit local confirmation and persistent simulated fills |
 
 [Massive aggregate API](https://massive.com/docs/rest/stocks/aggregates/custom-bars) · [CrewAI documentation](https://docs.crewai.com/)
-
-## Local launch after configuring .env
-
-```bash
-python -m streamlit run app.py
-```
-
-The review shows qualitative thesis, challenge, checked observations and uncertainties. Passing structured checks does not establish semantic correctness or authorize a trade.
-
-A failed review receives at most one additional editor correction call with exact validation feedback and Python-calculated signed rankings. Both attempts remain in the audit record. Correction adds model usage; if it fails, the draft remains flagged.
-
-Review correction uses an independent editor and names each offending narrative field and token. Comparative prose (including higher/lower and outperform) remains blocked; market comparisons belong in validated structured claims. A successful check validates structured facts, not investment suitability or the meaning of every sentence.
